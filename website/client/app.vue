@@ -71,8 +71,8 @@
 import axios from 'axios';
 import { loadProgressBar } from 'axios-progress-bar';
 
-import AppMenu from './components/appMenu';
-import AppHeader from './components/appHeader';
+import AppMenu from './components/header/menu';
+import AppHeader from './components/header/index';
 import AppFooter from './components/appFooter';
 import notificationsDisplay from './components/notifications';
 import snackbars from './components/snackbars/notifications';
@@ -216,15 +216,11 @@ export default {
       // Verify the client is updated
       // const serverAppVersion = response.data.appVersion;
       // let serverAppVersionState = this.$store.state.serverAppVersion;
-      // let deniedUpdate = this.$store.state.deniedUpdate;
       // if (isApiCall && !serverAppVersionState) {
       //   this.$store.state.serverAppVersion = serverAppVersion;
-      // } else if (isApiCall && serverAppVersionState !== serverAppVersion && !deniedUpdate || isCron) {
-      //   // For reload on cron
-      //   if (isCron || confirm(this.$t('habiticaHasUpdated'))) {
+      // } else if (isApiCall && serverAppVersionState !== serverAppVersion) {
+      //   if (document.activeElement.tagName !== 'INPUT' || confirm(this.$t('habiticaHasUpdated'))) {
       //     location.reload(true);
-      //   } else {
-      //     this.$store.state.deniedUpdate = true;
       //   }
       // }
 
@@ -363,4 +359,26 @@ export default {
 <style src="intro.js/minified/introjs.min.css"></style>
 <style src="bootstrap/scss/bootstrap.scss" lang="scss"></style>
 <style src="assets/scss/index.scss" lang="scss"></style>
-<style src="assets/css/index.css"></style>
+<style src="assets/css/sprites/spritesmith-largeSprites-0.css"></style>
+<style src="assets/css/sprites/spritesmith-main-0.css"></style>
+<style src="assets/css/sprites/spritesmith-main-1.css"></style>
+<style src="assets/css/sprites/spritesmith-main-2.css"></style>
+<style src="assets/css/sprites/spritesmith-main-3.css"></style>
+<style src="assets/css/sprites/spritesmith-main-4.css"></style>
+<style src="assets/css/sprites/spritesmith-main-5.css"></style>
+<style src="assets/css/sprites/spritesmith-main-6.css"></style>
+<style src="assets/css/sprites/spritesmith-main-7.css"></style>
+<style src="assets/css/sprites/spritesmith-main-8.css"></style>
+<style src="assets/css/sprites/spritesmith-main-9.css"></style>
+<style src="assets/css/sprites/spritesmith-main-10.css"></style>
+<style src="assets/css/sprites/spritesmith-main-11.css"></style>
+<style src="assets/css/sprites/spritesmith-main-12.css"></style>
+<style src="assets/css/sprites/spritesmith-main-13.css"></style>
+<style src="assets/css/sprites/spritesmith-main-14.css"></style>
+<style src="assets/css/sprites/spritesmith-main-15.css"></style>
+<style src="assets/css/sprites/spritesmith-main-16.css"></style>
+<style src="assets/css/sprites/spritesmith-main-17.css"></style>
+<style src="assets/css/sprites/spritesmith-main-18.css"></style>
+<style src="assets/css/sprites/spritesmith-main-19.css"></style>
+<style src="assets/css/sprites/spritesmith-main-20.css"></style>
+<style src="assets/css/sprites.css"></style>
