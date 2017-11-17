@@ -13,6 +13,7 @@
             type="text", :class="[`${cssClass}-modal-input`]",
             required, v-model="task.text",
             autofocus, spellcheck="true",
+            :disabled="groupAccessRequiredAndOnPersonalPage"
           )
         .form-group
           label(v-once) {{ $t('notes') }}
@@ -66,7 +67,7 @@
               .option-item-label(v-once) {{ $t('hard') }}
         .option(v-if="task.type === 'todo'")
           label(v-once) {{ $t('dueDate') }}
-          datepicker(
+          datepicker.d-inline-block(
             v-model="task.date",
             :clearButton='true',
             clearButtonIcon='category-select',
@@ -77,7 +78,7 @@
           )
         .option(v-if="task.type === 'daily'")
           label(v-once) {{ $t('startDate') }}
-          datepicker(
+          datepicker.d-inline-block(
             v-model="task.startDate",
             :clearButton='false',
             :todayButton='true',
@@ -458,9 +459,18 @@
         background-size: 10px 10px;
         background-image: url(~client/assets/svg/for-css/positive.svg);
       }
+    }
+
+    .checklist-group {
+      .destroy-icon {
+        display: none;
+      }
 
       &:hover {
-        cursor: move;
+        .destroy-icon {
+          display: inline-block;
+          color: $gray-200;
+        }
       }
     }
 
@@ -507,10 +517,7 @@
 
 <script>
 import TagsPopup from './tagsPopup';
-import bModal from 'bootstrap-vue/lib/components/modal';
 import { mapGetters, mapActions, mapState } from 'client/libs/store';
-import bDropdown from 'bootstrap-vue/lib/components/dropdown';
-import bDropdownItem from 'bootstrap-vue/lib/components/dropdown-item';
 import toggleSwitch from 'client/components/ui/toggleSwitch';
 import sortable from 'client/directives/sortable.directive';
 import clone from 'lodash/clone';
@@ -531,9 +538,6 @@ import goldIcon from 'assets/svg/gold.svg';
 export default {
   components: {
     TagsPopup,
-    bModal,
-    bDropdown,
-    bDropdownItem,
     Datepicker,
     toggleSwitch,
   },
@@ -599,6 +603,10 @@ export default {
       user: 'user.data',
       dayMapping: 'constants.DAY_MAPPING',
     }),
+    groupAccessRequiredAndOnPersonalPage () {
+      if (!this.groupId && this.task.group.id) return true;
+      return false;
+    },
     checklistEnabled () {
       return ['daily', 'todo'].indexOf(this.task.type) > -1 && !this.isOriginalChallengeTask;
     },
@@ -752,16 +760,16 @@ export default {
         this.saveTask(this.task);
         this.$emit('taskEdited', this.task);
       }
-      this.$root.$emit('hide::modal', 'task-modal');
+      this.$root.$emit('bv::hide::modal', 'task-modal');
     },
     destroy () {
       if (!confirm(this.$t('sureDelete'))) return;
       this.destroyTask(this.task);
       this.$emit('taskDestroyed', this.task);
-      this.$root.$emit('hide::modal', 'task-modal');
+      this.$root.$emit('bv::hide::modal', 'task-modal');
     },
     cancel () {
-      this.$root.$emit('hide::modal', 'task-modal');
+      this.$root.$emit('bv::hide::modal', 'task-modal');
     },
     onClose () {
       this.showTagsSelect = false;
