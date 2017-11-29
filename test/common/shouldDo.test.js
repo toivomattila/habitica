@@ -706,7 +706,27 @@ describe('shouldDo', () => {
       day = moment();
       dailyTask.repeat[DAY_MAPPING[day.day()]] = true;
       dailyTask.everyX = 3;
-      let threeWeeksFromToday = day.add(6, 'weeks').day(day.day()).toDate();
+      const threeWeeksFromToday = day.add(6, 'weeks').day(day.day()).toDate();
+
+      expect(shouldDo(threeWeeksFromToday, dailyTask, options)).to.equal(true);
+    });
+
+    it('activates Daily on every (x) week on weekday across a year', () => {
+      dailyTask.repeat = {
+        su: false,
+        s: false,
+        f: false,
+        th: false,
+        w: false,
+        t: false,
+        m: false,
+      };
+
+      day = moment('2017-11-19');
+      dailyTask.startDate = day.toDate();
+      dailyTask.repeat[DAY_MAPPING[day.day()]] = true;
+      dailyTask.everyX = 3;
+      const threeWeeksFromToday = moment('2018-01-21');
 
       expect(shouldDo(threeWeeksFromToday, dailyTask, options)).to.equal(true);
     });
@@ -1032,7 +1052,7 @@ describe('shouldDo', () => {
         m: false,
       };
 
-      let today = moment('2017-01-26');
+      let today = moment('2017-01-26:00:00.000-00:00');
       let week = today.monthWeek();
       let dayOfWeek = today.day();
       dailyTask.startDate = today.toDate();
@@ -1041,7 +1061,7 @@ describe('shouldDo', () => {
       dailyTask.everyX = 2;
       dailyTask.frequency = 'monthly';
 
-      day = moment('2017-03-24');
+      day = moment('2017-03-24:00:00.000-00:00');
 
       expect(shouldDo(day, dailyTask, options)).to.equal(false);
     });
@@ -1057,7 +1077,7 @@ describe('shouldDo', () => {
         m: false,
       };
 
-      let today = moment('2017-01-27');
+      let today = moment('2017-01-27:00:00.000-00:00');
       let week = today.monthWeek();
       let dayOfWeek = today.day();
       dailyTask.startDate = today.toDate();
@@ -1066,7 +1086,7 @@ describe('shouldDo', () => {
       dailyTask.everyX = 2;
       dailyTask.frequency = 'monthly';
 
-      day = moment('2017-03-24');
+      day = moment('2017-03-24:00:00.000-00:00');
 
       expect(shouldDo(day, dailyTask, options)).to.equal(true);
     });
@@ -1082,7 +1102,7 @@ describe('shouldDo', () => {
         m: false,
       };
 
-      let today = moment('2017-01-27');
+      let today = moment('2017-01-27:00:00.000-00:00');
       let week = today.monthWeek();
       let dayOfWeek = today.day();
       dailyTask.startDate = today.toDate();
@@ -1091,7 +1111,7 @@ describe('shouldDo', () => {
       dailyTask.everyX = 2;
       dailyTask.frequency = 'monthly';
 
-      day = moment('2017-03-24');
+      day = moment('2017-03-24:00:00.000-00:00');
       expect(shouldDo(day, dailyTask, options)).to.equal(true);
     });
 
