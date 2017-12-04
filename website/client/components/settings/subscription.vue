@@ -31,7 +31,7 @@
             span.noninteractive-button.btn-danger {{ $t('canceledSubscription') }}
             i.glyphicon.glyphicon-time
             |  {{ $t('subCanceled') }} &nbsp;
-            strong {{user.purchased.plan.dateTerminated | date}}
+            strong {{dateTerminated}}
           tr(v-if='!hasCanceledSubscription'): td
             h4 {{ $t('subscribed') }}
             p(v-if='hasPlan && !hasGroupPlan') {{ $t('purchasedPlanId', purchasedPlanIdInfo) }}
@@ -68,7 +68,7 @@
 
         div(v-if='hasSubscription')
           .btn.btn-primary(v-if='canEditCardDetails', @click='showStripeEdit()') {{ $t('subUpdateCard') }}
-          .btn.btn-sm.btn-danger(v-if='canCancelSubscription', @click='cancelSubscription()') {{ $t('cancelSub') }}
+          .btn.btn-sm.btn-danger(v-if='canCancelSubscription && !loading', @click='cancelSubscription()') {{ $t('cancelSub') }}
           small(v-if='!canCancelSubscription', v-html='getCancelSubInfo()')
 
         .subscribe-pay(v-if='!hasSubscription || hasCanceledSubscription')
@@ -118,6 +118,7 @@ export default {
   mixins: [paymentsMixin],
   data () {
     return {
+      loading: false,
       gemCostTranslation: {
         gemCost: planGemLimits.convRate,
         gemLimit: planGemLimits.convRate,
@@ -136,13 +137,6 @@ export default {
         GIFT: 'Gift',
       },
     };
-  },
-  filters: {
-    date (value) {
-      if (!value) return '';
-      return moment(value);
-      // return moment(value).format(this.user.preferences.dateFormat); // @TODO make that work (`TypeError: this is undefined`)
-    },
   },
   computed: {
     ...mapState({user: 'user.data', credentials: 'credentials'}),
@@ -230,6 +224,10 @@ export default {
       return {
         amount: this.numberOfMysticHourglasses,
       };
+    },
+    dateTerminated () {
+      if (!this.user.preferences || !this.user.preferences.dateFormat) return this.user.purchased.plan.dateTerminated;
+      return moment(this.user.purchased.plan.dateTerminated).format(this.user.preferences.dateFormat.toUpperCase());
     },
     canCancelSubscription () {
       return (
