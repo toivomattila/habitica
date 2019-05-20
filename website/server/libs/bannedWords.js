@@ -108,6 +108,8 @@ let bannedWords = [
   'fucker',
   'fuckers',
   'f\\*ck',
+  'fuckhead',
+  'fuckheads',
   'motherfucker',
   'motherfuckers',
   'motherfucking',
@@ -163,6 +165,8 @@ let bannedWords = [
 
   'heroin',
   'cocaine',
+
+  'pewdiepie',
 ];
 
 module.exports = bannedWords;

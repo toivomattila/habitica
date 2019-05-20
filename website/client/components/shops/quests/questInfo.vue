@@ -1,38 +1,58 @@
 <template lang="pug">
 .row(:class="{'small-version': smallVersion}")
-  template(v-if="quest.collect")
-    span.title(:class="smallVersion ? 'col-3' : 'col-4'") {{ $t('collect') + ':' }}
-    span.col-8
+  .table-row(v-if="quest.collect")
+    dt {{ $t('collect') + ':' }}
+    dd
       div(v-for="(collect, key) of quest.collect")
         span {{ collect.count }} {{ getCollectText(collect) }}
 
-  template(v-if="quest.boss")
-    span.title(:class="smallVersion ? 'col-3' : 'col-4'") {{ $t('bossHP') + ':' }}
-    span.col-8 {{ quest.boss.hp }}
+  .table-row(v-if="quest.boss")
+    dt {{ $t('bossHP') + ':' }}
+    dd {{ quest.boss.hp }}
 
-  span.title(:class="smallVersion ? 'col-3' : 'col-4'") {{ $t('difficulty') + ':' }}
-  span.col-8
-    .svg-icon.inline(
-      v-for="star of stars()", v-html="icons[star]",
-      :class="smallVersion ? 'icon-12' : 'icon-16'",
-    )
+  .table-row
+    dt {{ $t('difficulty') + ':' }}
+    dd
+      .svg-icon.inline(
+        v-for="star of stars()", v-html="icons[star]",
+        :class="smallVersion ? 'icon-12' : 'icon-16'",
+      )
 </template>
 
 <style lang="scss" scoped>
 @import '~client/assets/scss/colors.scss';
 
-.title {
-  text-align: left;
-  font-weight: bold;
-  white-space: nowrap;
+.row {
+  display: table;
+  color: #E1E0E3;
+  margin: 0;
 }
 
-.col-8 {
-  text-align: left;
-}
-
-.col-8:not(:last-child) {
+.table-row {
+  display: table-row;
   margin-bottom: 4px;
+}
+
+dd {
+  height: 24px;
+  padding-left: 1em;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+dt, dd {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+dt, dd, dd > * {
+  text-align: left;
+}
+
+dt {
+  font-size: 1.3em;
+  line-height: 1.2;
+  color: $gray-50;
 }
 
 .svg-icon {
@@ -47,6 +67,25 @@
     margin-top: 1px;
   }
 }
+</style>
+
+<style lang="scss">
+.questPopover {
+  dt {
+    color: inherit;
+    font-size: 1em;
+    white-space: nowrap;
+  }
+}
+
+// making sure the star-colors always correct
+.star {
+  fill: #ffb445;
+}
+.star-empty {
+  fill: #686274;
+}
+
 </style>
 
 <script>

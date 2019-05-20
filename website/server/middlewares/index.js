@@ -21,7 +21,7 @@ import {
 } from './redirects';
 import v1 from './v1';
 import v2 from './v2';
-import v3 from './v3';
+import appRoutes from './appRoutes';
 import responseHandler from './response';
 import {
   attachTranslateFunction,
@@ -30,7 +30,7 @@ import basicAuth from 'express-basic-auth';
 
 const IS_PROD = nconf.get('IS_PROD');
 const DISABLE_LOGGING = nconf.get('DISABLE_REQUEST_LOGGING') === 'true';
-const ENABLE_HTTP_AUTH = nconf.get('SITE_HTTP_AUTH:ENABLED') === 'true';
+const ENABLE_HTTP_AUTH = nconf.get('SITE_HTTP_AUTH_ENABLED') === 'true';
 // const PUBLIC_DIR = path.join(__dirname, '/../../client');
 
 const SESSION_SECRET = nconf.get('SESSION_SECRET');
@@ -79,7 +79,7 @@ module.exports = function attachMiddlewares (app, server) {
   // The site can require basic HTTP authentication to be accessed
   if (ENABLE_HTTP_AUTH) {
     const httpBasicAuthUsers = {};
-    httpBasicAuthUsers[nconf.get('SITE_HTTP_AUTH:USERNAME')] = nconf.get('SITE_HTTP_AUTH:PASSWORD');
+    httpBasicAuthUsers[nconf.get('SITE_HTTP_AUTH_USERNAME')] = nconf.get('SITE_HTTP_AUTH_PASSWORD');
 
     app.use(basicAuth({
       users: httpBasicAuthUsers,
@@ -89,12 +89,11 @@ module.exports = function attachMiddlewares (app, server) {
   }
   app.use('/api/v2', v2);
   app.use('/api/v1', v1);
-  app.use(v3); // the main app, also setup top-level routes
+  app.use(appRoutes); // the main app, also setup top-level routes
   staticMiddleware(app);
 
   app.use(notFoundHandler);
 
   // Error handler middleware, define as the last one.
-  // Used for v3 and v1, v2 will keep using its own error handler
   app.use(errorHandler);
 };

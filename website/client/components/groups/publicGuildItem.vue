@@ -76,10 +76,18 @@ router-link.card-link(:to="{ name: 'guild', params: { groupId: guild._id } }")
 
     .gold {
       color: #fdbb5a;
+
+      .member-count {
+        color: #fdbb5a;
+      }
     }
 
     .silver {
       color: #c2c2c2;
+
+      .member-count {
+        color: #c2c2c2;
+      }
     }
 
     .badge-column {
@@ -101,7 +109,7 @@ router-link.card-link(:to="{ name: 'guild', params: { groupId: guild._id } }")
 
     .member-count {
       position: relative;
-      top: -3.6em;
+      top: -3.7em;
       font-size: 18px;
       font-weight: bold;
       line-height: 1.1;

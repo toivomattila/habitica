@@ -2,8 +2,8 @@
 .row.footer-row
   buy-gems-modal(v-if='user')
   //modify-inventory(v-if="isUserLoaded")
-  footer.col-12(:class="{expanded: isExpandedFooter}")
-    .row(v-if="isExpandedFooter")
+  footer.col-12.expanded
+    .row
       .col-12.col-md-2
         h3
           a(href='https://itunes.apple.com/us/app/habitica/id994882113?ls=1&mt=8', target='_blank') {{ $t('mobileIOS') }}
@@ -21,7 +21,7 @@
           li
            router-link(to='/static/faq') {{ $t('FAQ') }}
           li
-            a(href='http://habitica.wikia.com/wiki/Whats_New', target='_blank') {{ $t('oldNews') }}
+            a(href='http://habitica.fandom.com/wiki/Whats_New', target='_blank') {{ $t('oldNews') }}
           li
            router-link(to='/static/merch') {{ $t('merch') }}
           li
@@ -44,7 +44,7 @@
           li
             a(href='https://www.facebook.com/Habitica', target='_blank') {{ $t('communityFacebook') }}
           li
-            a(href='https://www.reddit.com/r/habitrpg/', target='_blank') {{ $t('communityReddit') }}
+            a(href='https://www.instagram.com/habitica', target='_blank') {{ $t('communityInstagram') }}
       .col-12.col-md-6
         .row
           .col-6
@@ -55,25 +55,24 @@
               li
                 a(:href="getDataDisplayToolUrl", target='_blank') {{ $t('dataDisplayTool') }}
               li
-                a(href='http://habitica.wikia.com/wiki/Guidance_for_Blacksmiths', target='_blank') {{ $t('guidanceForBlacksmiths') }}
-              li
-                a(href='http://devs.habitica.com/', target='_blank') {{ $t('devBlog') }}
+                a(href='http://habitica.fandom.com/wiki/Guidance_for_Blacksmiths', target='_blank') {{ $t('guidanceForBlacksmiths') }}
           .col-6.social
             h3 {{ $t('footerSocial') }}
-            a.social-circle(href='https://twitter.com/habitica', target='_blank')
-              .social-icon.svg-icon(v-html='icons.twitter')
-            // TODO: Not ready yet. a.social-circle(href='https://www.instagram.com/habitica/', target='_blank')
-              .social-icon.svg-icon.instagram(v-html='icons.instagram')
-            a.social-circle(href='https://www.facebook.com/Habitica', target='_blank')
-              .social-icon.facebook.svg-icon(v-html='icons.facebook')
+            .icons
+              a.social-circle(href='https://twitter.com/habitica', target='_blank')
+                .social-icon.svg-icon(v-html='icons.twitter')
+              a.social-circle(href='https://www.instagram.com/habitica/', target='_blank')
+                .social-icon.svg-icon.instagram(v-html='icons.instagram')
+              a.social-circle(href='https://www.facebook.com/Habitica', target='_blank')
+                .social-icon.facebook.svg-icon(v-html='icons.facebook')
         .row
-          .col-12.col-md-10 {{ $t('donateText3') }}
-          .col-12.col-md-2
-            button.btn.btn-contribute(@click="donate()", v-if="user")
+          .col-12.col-md-8 {{ $t('donateText3') }}
+          .col-12.col-md-4
+            button.btn.btn-contribute.btn-flat(@click="donate()", v-if="user")
               .svg-icon.heart(v-html="icons.heart")
               .text {{ $t('companyDonate') }}
-            .btn.btn-contribute(v-else)
-              a(href='http://habitica.wikia.com/wiki/Contributing_to_Habitica', target='_blank')
+            .btn.btn-contribute.btn-flat(v-else)
+              a(href='http://habitica.fandom.com/wiki/Contributing_to_Habitica', target='_blank')
                 .svg-icon.heart(v-html="icons.heart")
                 .text {{ $t('companyContribute') }}
     .row
@@ -81,7 +80,7 @@
         hr
     .row
       .col-12.col-md-5
-        | © 2018 Habitica. All rights reserved.
+        | © 2019 Habitica. All rights reserved.
         .debug.float-left(v-if="!IS_PRODUCTION && isUserLoaded")
           button.btn.btn-primary(@click="debugMenuShown = !debugMenuShown") Toggle Debug Menu
           .debug-group(v-if="debugMenuShown")
@@ -96,6 +95,7 @@
             a.btn.btn-secondary(@click="plusTenHealth()") + 10HP
             a.btn.btn-secondary(@click="addMana()") +MP
             a.btn.btn-secondary(@click="addLevelsAndGold()") +Exp +GP +MP
+            a.btn.btn-secondary(@click="addExp()") +Exp
             a.btn.btn-secondary(@click="addOneLevel()") +1 Level
             a.btn.btn-secondary(@click="addQuestProgress()", tooltip="+1000 to boss quests. 300 items to collection quests") Quest Progress Up
             a.btn.btn-secondary(@click="makeAdmin()") Make Admin
@@ -103,11 +103,6 @@
       .col-12.col-md-2.text-center
         .logo.svg-icon(v-html='icons.gryphon')
       .col-12.col-md-5.text-right
-        template(v-if="!isExpandedFooter")
-          span
-            a(:href="getDataDisplayToolUrl", target='_blank') {{ $t('dataDisplayTool') }}
-          span.ml-4
-            a(target="_blanck", href="/static/community-guidelines") {{ $t('communityGuidelines') }}
         span.ml-4
           a(target="_blanck", href="/static/privacy") {{ $t('privacy') }}
         span.ml-4
@@ -127,13 +122,6 @@
 
     a {
       color: #2995cd;
-    }
-
-    &:not(.expanded) {
-      hr {
-        margin-top: 0px;
-        margin-bottom: 7px;
-      }
     }
   }
 
@@ -156,28 +144,42 @@
     }
   }
 
+  .icons {
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 1;
+  }
+
+  // smaller than desktop
+  @media only screen and (max-width: 992px) {
+    .social-circle {
+      height: 32px !important;
+      width: 32px !important;
+
+      margin-left: 0.75em !important;
+    }
+  }
+
   .social-circle {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     background-color: #c3c0c7;
-    display: inline-block;
+    display: flex;
     margin-left: 1em;
-    float: right;
+
+    &:first-child {
+      margin-left: 0;
+    }
+
+    &:hover {
+      background-color: #a5a1ac;
+    }
 
     .social-icon {
       color: #e1e0e3;
       width: 16px;
-      margin: 0 auto;
-      margin-top: 1em;
-    }
-
-    .facebook {
-      margin-top: .7em;
-    }
-
-    .instagram {
-      margin-top: .85em;
+      margin: auto;
     }
   }
 
@@ -201,7 +203,20 @@
     box-shadow: none;
     border-radius: 4px;
 
+    &:hover {
+      background: #a5a1ac;
+
+      .text {
+        color: white;
+      }
+    }
+
+    a {
+      display: flex;
+    }
+
     .heart {
+      max-height: 25px;
       width: 18px;
       margin-right: .5em;
       margin-bottom: .2em;
@@ -215,6 +230,10 @@
 </style>
 
 <style lang="scss">
+  .heart svg {
+    margin-top: .1em;
+  }
+
   .facebook svg {
     width: 10px;
     margin: 0 auto;
@@ -278,9 +297,6 @@ export default {
   computed: {
     ...mapState({user: 'user.data'}),
     ...mapState(['isUserLoaded']),
-    isExpandedFooter () {
-      return this.$route.name === 'tasks' ? false : true;
-    },
     getDataDisplayToolUrl () {
       const base = 'https://oldgods.net/habitrpg/habitrpg_user_data_display.html';
       if (!this.user) return;
@@ -304,7 +320,7 @@ export default {
 
       let date = moment(this.user.lastCron).subtract(numberOfDays, 'days').toDate();
 
-      await axios.post('/api/v3/debug/set-cron', {
+      await axios.post('/api/v4/debug/set-cron', {
         lastCron: date,
       });
 
@@ -312,12 +328,12 @@ export default {
       // @TODO: Sync user?
     },
     async addTenGems () {
-      await axios.post('/api/v3/debug/add-ten-gems');
+      await axios.post('/api/v4/debug/add-ten-gems');
       // @TODO: Notification.text('+10 Gems!');
       this.user.balance += 2.5;
     },
     async addHourglass () {
-      await axios.post('/api/v3/debug/add-hourglass');
+      await axios.post('/api/v4/debug/add-hourglass');
       // @TODO: Sync?
     },
     addGold () {
@@ -337,7 +353,7 @@ export default {
         'stats.mp': this.user.stats.mp  + 10000,
       });
     },
-    addOneLevel () {
+    addExp () {
       // @TODO: Name these variables better
       let exp = 0;
       let five = 10 * this.user.stats.lvl;
@@ -351,14 +367,19 @@ export default {
         'stats.exp': exp,
       });
     },
+    addOneLevel () {
+      this.$store.dispatch('user:set', {
+        'stats.lvl': this.user.stats.lvl + 1,
+      });
+    },
     async addQuestProgress () {
-      await axios.post('/api/v3/debug/quest-progress');
+      await axios.post('/api/v4/debug/quest-progress');
 
       //  @TODO:  Notification.text('Quest progress increased');
       //  @TODO:  User.sync();
     },
     async makeAdmin  () {
-      await axios.post('/api/v3/debug/make-admin');
+      await axios.post('/api/v4/debug/make-admin');
 
       // @TODO: Notification.text('You are now an admin! Go to the Hall of Heroes to change your contributor level.');
       // @TODO: sync()

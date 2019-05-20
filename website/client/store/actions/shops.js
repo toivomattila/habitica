@@ -20,12 +20,9 @@ function buyItem (store, params) {
 
   let opResult = buyOp(user, {params, quantity});
 
-  user.pinnedItems = opResult[0].pinnedItems;
-
-
   return {
     result: opResult,
-    httpCall: axios.post(`/api/v3/user/buy/${params.key}`),
+    httpCall: axios.post(`/api/v4/user/buy/${params.key}`),
   };
 }
 
@@ -40,7 +37,7 @@ export function buyQuestItem (store, params) {
 
   return {
     result: opResult,
-    httpCall: axios.post(`/api/v3/user/buy/${params.key}`, {type: 'quest', quantity}),
+    httpCall: axios.post(`/api/v4/user/buy/${params.key}`, {type: 'quest', quantity}),
   };
 }
 
@@ -49,7 +46,7 @@ async function buyArmoire (store, params) {
   let armoire = content.armoire;
 
   // We need the server result because Armoire has random item in the result
-  let result = await axios.post('/api/v3/user/buy/armoire', {
+  let result = await axios.post('/api/v4/user/buy/armoire', {
     type: 'armoire',
     quantity,
   });
@@ -64,6 +61,12 @@ async function buyArmoire (store, params) {
     if (item.type === 'gear') {
       store.state.user.data.items.gear.owned[item.dropKey] = true;
     }
+
+    if (item.type === 'food') {
+      if (!store.state.user.data.items.food[item.dropKey]) store.state.user.data.items.food[item.dropKey] = 0;
+      store.state.user.data.items.food[item.dropKey] += 1;
+    }
+
     store.state.user.data.stats.gp -= armoire.value;
 
     // @TODO: We might need to abstract notifications to library rather than mixin
@@ -94,7 +97,7 @@ export function purchase (store, params) {
 
   return {
     result: opResult,
-    httpCall: axios.post(`/api/v3/user/purchase/${params.type}/${params.key}`, {quantity}),
+    httpCall: axios.post(`/api/v4/user/purchase/${params.type}/${params.key}`, {quantity}),
   };
 }
 
@@ -104,7 +107,7 @@ export function purchaseMysterySet (store, params) {
 
   return {
     result: opResult,
-    httpCall: axios.post(`/api/v3/user/buy/${params.key}`, {type: 'mystery'}),
+    httpCall: axios.post(`/api/v4/user/buy/${params.key}`, {type: 'mystery'}),
   };
 }
 
@@ -114,7 +117,7 @@ export function purchaseHourglassItem (store, params) {
 
   return {
     result: opResult,
-    httpCall: axios.post(`/api/v3/user/purchase-hourglass/${params.type}/${params.key}`),
+    httpCall: axios.post(`/api/v4/user/purchase-hourglass/${params.type}/${params.key}`),
   };
 }
 
@@ -124,7 +127,7 @@ export function unlock (store, params) {
 
   return {
     result: opResult,
-    httpCall: axios.post(`/api/v3/user/unlock?path=${params.query.path}`),
+    httpCall: axios.post(`/api/v4/user/unlock?path=${params.query.path}`),
   };
 }
 
@@ -138,7 +141,7 @@ export async function genericPurchase (store, params) {
     case 'fortify': {
       let rerollResult = rerollOp(store.state.user.data, store.state.tasks.data);
 
-      await axios.post('/api/v3/user/reroll');
+      await axios.post('/api/v4/user/reroll');
       await Promise.all([
         store.dispatch('user:fetch', {forceLoad: true}),
         store.dispatch('tasks:fetchUserTasks', {forceLoad: true}),
@@ -173,20 +176,20 @@ export async function genericPurchase (store, params) {
 export function sellItems (store, params) {
   const user = store.state.user.data;
   sellOp(user, {params, query: {amount: params.amount}});
-  axios.post(`/api/v3/user/sell/${params.type}/${params.key}?amount=${params.amount}`);
+  axios.post(`/api/v4/user/sell/${params.type}/${params.key}?amount=${params.amount}`);
 }
 
 export function releasePets (store, params) {
   releasePetsOp(params.user);
-  axios.post('/api/v3/user/release-pets');
+  axios.post('/api/v4/user/release-pets');
 }
 
 export function releaseMounts (store, params) {
   releaseMountsOp(params.user);
-  axios.post('/api/v3/user/release-mounts');
+  axios.post('/api/v4/user/release-mounts');
 }
 
 export function releaseBoth (store, params) {
   releaseBothOp(params.user);
-  axios.post('/api/v3/user/release-both');
+  axios.post('/api/v4/user/release-both');
 }

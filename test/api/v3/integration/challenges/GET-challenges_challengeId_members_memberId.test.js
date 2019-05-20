@@ -3,7 +3,7 @@ import {
   generateChallenge,
   generateGroup,
   translate as t,
-} from '../../../../helpers/api-v3-integration.helper';
+} from '../../../../helpers/api-integration/v3';
 import { v4 as generateUUID } from 'uuid';
 
 describe('GET /challenges/:challengeId/members/:memberId', () => {
@@ -81,7 +81,7 @@ describe('GET /challenges/:challengeId/members/:memberId', () => {
     await groupLeader.post(`/tasks/challenge/${challenge._id}`, [{type: 'habit', text: taskText}]);
 
     let memberProgress = await user.get(`/challenges/${challenge._id}/members/${groupLeader._id}`);
-    expect(memberProgress).to.have.all.keys(['_id', 'id', 'profile', 'tasks']);
+    expect(memberProgress).to.have.all.keys(['_id', 'auth', 'flags', 'id', 'profile', 'tasks']);
     expect(memberProgress.profile).to.have.all.keys(['name']);
     expect(memberProgress.tasks.length).to.equal(1);
   });

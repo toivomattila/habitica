@@ -36,8 +36,9 @@ function revealMysteryItems (user) {
       pushedItems.push(item.key);
     }
   });
-
-  user.addNotification('NEW_MYSTERY_ITEMS', { items: pushedItems });
+  if (pushedItems.length > 0) {
+    user.addNotification('NEW_MYSTERY_ITEMS', { items: pushedItems });
+  }
 }
 
 // @TODO: Abstract to payment helper
@@ -50,6 +51,7 @@ function _dateDiff (earlyDate, lateDate) {
 async function createSubscription (data) {
   let recipient = data.gift ? data.gift.member : data.user;
   let block = shared.content.subscriptionBlocks[data.gift ? data.gift.subscription.key : data.sub.key];
+  let autoRenews = data.autoRenews !== undefined ? data.autoRenews : true;
   let months = Number(block.months);
   let today = new Date();
   let plan;
@@ -84,7 +86,7 @@ async function createSubscription (data) {
 
   plan = recipient.purchased.plan;
 
-  if (data.gift) {
+  if (data.gift || !autoRenews) {
     if (plan.customerId && !plan.dateTerminated) { // User has active plan
       plan.extraMonths += months;
     } else {
@@ -138,6 +140,7 @@ async function createSubscription (data) {
 
   if (recipient !== group) {
     recipient.items.pets['Jackalope-RoyalPurple'] = 5;
+    recipient.markModified('items.pets');
     revealMysteryItems(recipient);
   }
 
@@ -185,7 +188,7 @@ async function createSubscription (data) {
       senderMsg += ` ${data.gift.message}`;
     }
 
-    data.user.sendMessage(data.gift.member, { receiverMsg, senderMsg });
+    data.user.sendMessage(data.gift.member, { receiverMsg, senderMsg, save: false });
 
     if (data.gift.member.preferences.emailNotifications.giftedSubscription !== false) {
       txnEmail(data.gift.member, 'gifted-subscription', [
@@ -208,12 +211,8 @@ async function createSubscription (data) {
     }
   }
 
-  if (group) {
-    await group.save();
-  } else {
-    await data.user.save();
-  }
-
+  if (group) await group.save();
+  if (data.user && data.user.isModified()) await data.user.save();
   if (data.gift) await data.gift.member.save();
 
   slack.sendSubscriptionNotification({

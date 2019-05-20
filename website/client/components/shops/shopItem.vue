@@ -5,7 +5,7 @@ div
       slot(name="itemBadge", :item="item", :emptyItem="emptyItem")
 
       span.badge.badge-pill.badge-item.badge-clock(
-        v-if="item.event && showEventBadge",
+        v-if="item.event && item.owned == null && showEventBadge",
       )
         span.svg-icon.inline.clock(v-html="icons.clock")
 
@@ -38,7 +38,7 @@ div
         h4.popover-content-title(v-once) {{ item.text }}
         .popover-content-text(v-if='showNotes && item.key !== "armoire"', v-once) {{ item.notes }}
         .popover-content-text(v-if='showNotes && item.key === "armoire"') {{ item.notes }}
-      div(v-if="item.event") {{ limitedString }}
+      div.mt-4(v-if="item.event") {{ limitedString }}
 </template>
 
 <style lang="scss" scoped>

@@ -1,5 +1,5 @@
 <template lang="pug">
-  b-modal#inbox-modal(title="", :hide-footer="true", size='lg')
+  b-modal#inbox-modal(title="", :hide-footer="true", size='lg', @shown="onModalShown", @hide="onModalHide")
     .header-wrap.container.align-items-center(slot="modal-header")
       .row.align-items-center
         .col-4
@@ -7,21 +7,17 @@
             .col-2
               .svg-icon.envelope(v-html="icons.messageIcon")
             .col-6
-              h2.text-center(v-once) {{$t('messages')}}
-            // @TODO: Implement this after we fix username bug
-            // .col-2.offset-1
-            //  button.btn.btn-secondary(@click='toggleClick()') +
-        .col-4.offset-4
-          .svg-icon.close(v-html="icons.svgClose", @click='close()')
+              h2.text-center(v-once) {{ $t('messages') }}
+        .col-4.offset-3
           toggle-switch.float-right(
             :label="optTextSet.switchDescription",
             :checked="!this.user.inbox.optOut"
             :hoverText="optTextSet.popoverText",
             @change="toggleOpt()"
           )
-        // .col-8.to-form(v-if='displayCreate')
-        //   strong To:
-        // b-form-input
+        .col-1
+          .close
+            span.svg-icon.inline.icon-10(aria-hidden="true", v-html="icons.svgClose", @click="close()")
     .row
       .col-4.sidebar
         .search-section
@@ -34,30 +30,43 @@
           .conversation(v-for='conversation in filtersConversations', @click='selectConversation(conversation.key)',
             :class="{active: selectedConversation.key === conversation.key}")
             div
-             span(:class="userLevelStyle(conversation)") {{conversation.name}}
-             span.timeago {{conversation.date | timeAgo}}
-            div {{conversation.lastMessageText ? conversation.lastMessageText.substring(0, 30) : ''}}
+              h3(:class="userLevelStyle(conversation)") {{ conversation.name }}
+                .svg-icon(v-html="tierIcon(conversation)")
+            .time
+              span.mr-1(v-if='conversation.username') @{{ conversation.username }} •
+              span {{ conversation.date | timeAgo }}
+            div.messagePreview {{ conversation.lastMessageText ? removeTags(parseMarkdown(conversation.lastMessageText)) : '' }}
       .col-8.messages.d-flex.flex-column.justify-content-between
-        .empty-messages.text-center(v-if='activeChat.length === 0 && !selectedConversation.key')
+        .empty-messages.text-center(v-if='!selectedConversation.key')
           .svg-icon.envelope(v-html="icons.messageIcon")
           h4 {{placeholderTexts.title}}
           p(v-html="placeholderTexts.description")
-        .empty-messages.text-center(v-if='activeChat.length === 0 && selectedConversation.key')
+        .empty-messages.text-center(v-if='selectedConversation.key && selectedConversationMessages.length === 0')
           p {{ $t('beginningOfConversation', {userName: selectedConversation.name})}}
-        chat-message.message-scroll(v-if="activeChat.length > 0", :chat.sync='activeChat', :inbox='true', ref="chatscroll")
+        chat-messages.message-scroll(
+          v-if="selectedConversation.messages && selectedConversationMessages.length > 0",
+          :chat='selectedConversationMessages',
+          :inbox='true',
+          @message-removed='messageRemoved',
+          ref="chatscroll"
+        )
         .pm-disabled-caption.text-center(v-if="user.inbox.optOut && selectedConversation.key")
           h4 {{$t('PMDisabledCaptionTitle')}}
           p {{$t('PMDisabledCaptionText')}}
-
-        // @TODO: Implement new message header here when we fix the above
-
         .new-message-row(v-if='selectedConversation.key && !user.flags.chatRevoked')
-          textarea(v-model='newMessage')
-          button.btn.btn-secondary(@click='sendPrivateMessage()') Send
+          textarea(
+            v-model='newMessage',
+            @keyup.ctrl.enter='sendPrivateMessage()',
+            maxlength='3000'
+          )
+          button.btn.btn-secondary(@click='sendPrivateMessage()') {{$t('send')}}
+          .row
+            span.ml-3 {{ currentLength }} / 3000
 </template>
 
 <style lang="scss" scoped>
   @import '~client/assets/scss/colors.scss';
+  @import '~client/assets/scss/tiers.scss';
 
   .header-wrap {
     padding: 0.5em;
@@ -68,17 +77,19 @@
     }
   }
 
+  h3 {
+    margin: 0rem;
+
+    .svg-icon {
+      width: 10px;
+      display: inline-block;
+      margin-left: .5em;
+    }
+  }
+
   .envelope {
     color: $gray-400 !important;
     margin: 0;
-  }
-
-  .close {
-    margin-top: .5em;
-    width: 15px;
-    position: absolute;
-    top: -1.9em;
-    right: 0.3em;
   }
 
   .sidebar {
@@ -183,11 +194,6 @@
   .conversation {
     padding: 1.5em;
     background: $white;
-    height: 80px;
-
-    .timeago {
-      margin-left: 1em;
-    }
   }
 
   .conversation.active {
@@ -196,6 +202,22 @@
 
   .conversation:hover {
     cursor: pointer;
+  }
+
+  .time {
+    font-size: 12px;
+    color: $gray-200;
+    margin-bottom: 0.5rem;
+  }
+
+  .messagePreview {
+    display: block;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
   }
 </style>
 
@@ -206,41 +228,59 @@ import filter from 'lodash/filter';
 import sortBy from 'lodash/sortBy';
 import groupBy from 'lodash/groupBy';
 import { mapState } from 'client/libs/store';
+import habiticaMarkdown from 'habitica-markdown';
 import styleHelper from 'client/mixins/styleHelper';
 import toggleSwitch from 'client/components/ui/toggleSwitch';
+import axios from 'axios';
 
+import chatMessages from '../chat/chatMessages';
 import messageIcon from 'assets/svg/message.svg';
-import chatMessage from '../chat/chatMessages';
 import svgClose from 'assets/svg/close.svg';
+import tier1 from 'assets/svg/tier-1.svg';
+import tier2 from 'assets/svg/tier-2.svg';
+import tier3 from 'assets/svg/tier-3.svg';
+import tier4 from 'assets/svg/tier-4.svg';
+import tier5 from 'assets/svg/tier-5.svg';
+import tier6 from 'assets/svg/tier-6.svg';
+import tier7 from 'assets/svg/tier-7.svg';
+import tier8 from 'assets/svg/tier-mod.svg';
+import tier9 from 'assets/svg/tier-staff.svg';
+import tierNPC from 'assets/svg/tier-npc.svg';
 
 export default {
   mixins: [styleHelper],
   components: {
-    chatMessage,
+    chatMessages,
     toggleSwitch,
   },
   mounted () {
     this.$root.$on('habitica::new-inbox-message', (data) => {
       this.$root.$emit('bv::show::modal', 'inbox-modal');
 
-      const conversation = this.conversations.find(convo => {
-        return convo.key === data.userIdToMessage;
-      });
+      // Wait for messages to be loaded
+      const unwatchLoaded = this.$watch('loaded', (loaded) => {
+        if (!loaded) return;
 
-      if (conversation) {
+        const conversation = this.conversations.find(convo => {
+          return convo.key === data.userIdToMessage;
+        });
+        if (loaded) setImmediate(() => unwatchLoaded());
+
+        if (conversation) {
+          this.selectConversation(data.userIdToMessage);
+          return;
+        }
+
+        this.initiatedConversation = {
+          uuid: data.userIdToMessage,
+          user: data.displayName,
+          username: data.username,
+          backer: data.backer,
+          contributor: data.contributor,
+        };
+
         this.selectConversation(data.userIdToMessage);
-        return;
-      }
-
-      const newMessage = {
-        text: '',
-        timestamp: new Date(),
-        user: data.userName,
-        uuid: data.userIdToMessage,
-        id: '',
-      };
-      this.$set(this.user.inbox.messages, data.userIdToMessage, newMessage);
-      this.selectConversation(data.userIdToMessage);
+      }, {immediate: true});
     });
   },
   destroyed () {
@@ -251,13 +291,25 @@ export default {
       icons: Object.freeze({
         messageIcon,
         svgClose,
+        tier1,
+        tier2,
+        tier3,
+        tier4,
+        tier5,
+        tier6,
+        tier7,
+        tier8,
+        tier9,
+        tierNPC,
       }),
       displayCreate: true,
       selectedConversation: {},
       search: '',
       newMessage: '',
-      activeChat: [],
       showPopover: false,
+      messages: [],
+      loaded: false,
+      initiatedConversation: null,
     };
   },
   filters: {
@@ -268,13 +320,24 @@ export default {
   computed: {
     ...mapState({user: 'user.data'}),
     conversations () {
-      const inboxGroup = groupBy(this.user.inbox.messages, 'uuid');
+      const inboxGroup = groupBy(this.messages, 'uuid');
 
+      // Add placeholder for new conversations
+      if (this.initiatedConversation && this.initiatedConversation.uuid) {
+        inboxGroup[this.initiatedConversation.uuid] = [{
+          uuid: this.initiatedConversation.uuid,
+          user: this.initiatedConversation.user,
+          username: this.initiatedConversation.username,
+          id: '',
+          text: '',
+          timestamp: new Date(),
+        }];
+      }
       // Create conversation objects
       const convos = [];
       for (let key in inboxGroup) {
         const convoSorted = sortBy(inboxGroup[key], [(o) => {
-          return o.timestamp;
+          return (new Date(o.timestamp)).getTime();
         }]);
 
         // Fix poor inbox chat models
@@ -283,27 +346,29 @@ export default {
           if (newChat.sent) {
             newChat.toUUID = newChat.uuid;
             newChat.toUser = newChat.user;
+            newChat.toUserName = newChat.username;
+            newChat.toUserContributor = newChat.contributor;
+            newChat.toUserBacker = newChat.backer;
             newChat.uuid = this.user._id;
             newChat.user = this.user.profile.name;
+            newChat.username = this.user.auth.local.username;
             newChat.contributor = this.user.contributor;
             newChat.backer = this.user.backer;
           }
           return newChat;
         });
 
+        // In case the last message is a placeholder, remove it
         const recentMessage = newChatModels[newChatModels.length - 1];
-
-        // Special case where we have placeholder message because conversations are just grouped messages for now
-        if (!recentMessage.text) {
-          newChatModels.splice(newChatModels.length - 1, 1);
-        }
+        if (!recentMessage.text) newChatModels.splice(newChatModels.length - 1, 1);
 
         const convoModel = {
-          name: recentMessage.toUser ? recentMessage.toUser : recentMessage.user, // Handles case where from user sent the only message or the to user sent the only message
           key: recentMessage.toUUID ? recentMessage.toUUID : recentMessage.uuid,
-          messages: newChatModels,
-          lastMessageText: recentMessage.text,
+          name: recentMessage.toUser ? recentMessage.toUser : recentMessage.user, // Handles case where from user sent the only message or the to user sent the only message
+          username: !recentMessage.text ? recentMessage.username : recentMessage.toUserName,
           date: recentMessage.timestamp,
+          lastMessageText: recentMessage.text,
+          messages: newChatModels,
         };
 
         convos.push(convoModel);
@@ -316,11 +381,20 @@ export default {
 
       return conversations.reverse();
     },
+    // Separate from selectedConversation which is not coputed so messages don't update automatically
+    selectedConversationMessages () {
+      const selectedConversationKey = this.selectedConversation.key;
+      const selectedConversation = this.conversations.find(c => c.key === selectedConversationKey);
+      return selectedConversation ? selectedConversation.messages : [];
+    },
     filtersConversations () {
       if (!this.search) return this.conversations;
       return filter(this.conversations, (conversation) => {
         return conversation.name.toLowerCase().indexOf(this.search.toLowerCase()) !== -1;
       });
+    },
+    currentLength () {
+      return this.newMessage.length;
     },
     placeholderTexts () {
       if (this.user.flags.chatRevoked) {
@@ -337,17 +411,39 @@ export default {
     optTextSet () {
       if (!this.user.inbox.optOut) {
         return {
-          switchDescription: this.$t('PMDisable'),
+          switchDescription: this.$t('PMReceive'),
           popoverText: this.$t('PMEnabledOptPopoverText'),
         };
       }
       return {
-        switchDescription: this.$t('PMEnable'),
+        switchDescription: this.$t('PMReceive'),
         popoverText: this.$t('PMDisabledOptPopoverText'),
       };
     },
   },
   methods: {
+    async onModalShown () {
+      this.loaded = false;
+      const res = await axios.get('/api/v4/inbox/messages');
+      this.messages = res.data.data;
+      this.loaded = true;
+    },
+    onModalHide () {
+      this.messages = [];
+      this.loaded = false;
+      this.initiatedConversation = null;
+    },
+    messageRemoved (message) {
+      const messageIndex = this.messages.findIndex(msg => msg.id === message.id);
+      if (messageIndex !== -1) this.messages.splice(messageIndex, 1);
+      if (this.selectedConversationMessages.length === 0) this.initiatedConversation = {
+        uuid: this.selectedConversation.key,
+        user: this.selectedConversation.name,
+        username: this.selectedConversation.username,
+        backer: this.selectedConversation.backer,
+        contributor: this.selectedConversation.contributor,
+      };
+    },
     toggleClick () {
       this.displayCreate = !this.displayCreate;
     },
@@ -359,14 +455,7 @@ export default {
         return conversation.key === key;
       });
 
-      this.selectedConversation = convoFound;
-      let activeChat = convoFound.messages;
-
-      activeChat = sortBy(activeChat, [(o) => {
-        return moment(o.timestamp).toDate();
-      }]);
-
-      this.$set(this, 'activeChat', activeChat);
+      this.selectedConversation = convoFound || {};
 
       Vue.nextTick(() => {
         if (!this.$refs.chatscroll) return;
@@ -377,38 +466,59 @@ export default {
     sendPrivateMessage () {
       if (!this.newMessage) return;
 
-      let convoFound = this.conversations.find((conversation) => {
-        return conversation.key === this.selectedConversation.key;
-      });
-
-      this.$store.dispatch('members:sendPrivateMessage', {
-        toUserId: this.selectedConversation.key,
-        message: this.newMessage,
-      });
-
-      convoFound.messages.push({
+      this.messages.push({
+        sent: true,
         text: this.newMessage,
         timestamp: new Date(),
-        user: this.user.profile.name,
-        uuid: this.user._id,
+        user: this.selectedConversation.name,
+        username: this.selectedConversation.username,
+        uuid: this.selectedConversation.key,
         contributor: this.user.contributor,
       });
 
-      this.activeChat = convoFound.messages;
+      // Remove the placeholder message
+      if (this.initiatedConversation && this.initiatedConversation.uuid === this.selectedConversation.key) {
+        this.initiatedConversation = null;
+      }
 
-      convoFound.lastMessageText = this.newMessage;
-      convoFound.date = new Date();
-
-      this.newMessage = '';
+      this.selectedConversation.lastMessageText = this.newMessage;
+      this.selectedConversation.date = new Date();
 
       Vue.nextTick(() => {
         if (!this.$refs.chatscroll) return;
         let chatscroll = this.$refs.chatscroll.$el;
         chatscroll.scrollTop = chatscroll.scrollHeight;
       });
+
+      this.$store.dispatch('members:sendPrivateMessage', {
+        toUserId: this.selectedConversation.key,
+        message: this.newMessage,
+      }).then(response => {
+        const newMessage = response.data.data.message;
+        Object.assign(this.messages[this.messages.length - 1], newMessage);
+      });
+
+      this.newMessage = '';
     },
     close () {
       this.$root.$emit('bv::hide::modal', 'inbox-modal');
+    },
+    tierIcon (message) {
+      const isNPC = Boolean(message.backer && message.backer.npc);
+      if (isNPC) {
+        return this.icons.tierNPC;
+      }
+      if (!message.contributor) return;
+      return this.icons[`tier${message.contributor.level}`];
+    },
+    removeTags (html) {
+      let tmp = document.createElement('DIV');
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || '';
+    },
+    parseMarkdown (text) {
+      if (!text) return;
+      return habiticaMarkdown.render(String(text));
     },
   },
 };

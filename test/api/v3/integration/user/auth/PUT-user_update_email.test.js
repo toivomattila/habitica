@@ -1,7 +1,7 @@
 import {
   generateUser,
   translate as t,
-} from '../../../../../helpers/api-v3-integration.helper';
+} from '../../../../../helpers/api-integration/v3';
 import {
   bcryptCompare,
   sha1MakeSalt,
@@ -71,7 +71,7 @@ describe('PUT /user/auth/update-email', () => {
       })).to.eventually.be.rejected.and.eql({
         code: 401,
         error: 'NotAuthorized',
-        message: t('cannotFulfillReq', { techAssistanceEmail: nconf.get('EMAILS:TECH_ASSISTANCE_EMAIL') }),
+        message: t('cannotFulfillReq', { techAssistanceEmail: nconf.get('EMAILS_TECH_ASSISTANCE_EMAIL') }),
       });
     });
 

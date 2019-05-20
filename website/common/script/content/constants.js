@@ -32,6 +32,10 @@ export const EVENTS = {
   fall2017:   { start: '2017-09-21', end: '2017-11-02' },
   winter2018: { start: '2017-12-19', end: '2018-02-02' },
   spring2018: { start: '2018-03-20', end: '2018-05-02' },
+  summer2018: { start: '2018-06-19', end: '2018-08-02' },
+  fall2018:   { start: '2018-09-20', end: '2018-11-02' },
+  winter2019: { start: '2018-12-19', end: '2019-02-02' },
+  spring2019: { start: '2019-03-19', end: '2019-05-02' },
 };
 
 export const SEASONAL_SETS = {
@@ -65,6 +69,12 @@ export const SEASONAL_SETS = {
     'winter2018GiftWrappedSet',
     'winter2018MistletoeSet',
     'winter2018ReindeerSet',
+
+    // winter 2019
+    'winter2019PoinsettiaSet',
+    'winter2019WinterStarSet',
+    'winter2019BlizzardSet',
+    'winter2019PyrotechnicSet',
   ],
   spring: [
     // spring 2014
@@ -96,6 +106,74 @@ export const SEASONAL_SETS = {
     'spring2018SunriseWarriorSet',
     'spring2018DucklingRogueSet',
     'spring2018GarnetHealerSet',
+
+    // spring 2019
+    'spring2019AmberMageSet',
+    'spring2019OrchidWarriorSet',
+    'spring2019CloudRogueSet',
+    'spring2019RobinHealerSet',
+  ],
+  summer: [
+    // summer 2014
+    'daringSwashbucklerSet',
+    'emeraldMermageSet',
+    'reefSeahealerSet',
+    'roguishPirateSet',
+
+    // summer 2015
+    'sunfishWarriorSet',
+    'shipSoothsayerSet',
+    'strappingSailorSet',
+    'reefRenegadeSet',
+
+    // summer 2016
+    'summer2016SharkWarriorSet',
+    'summer2016DolphinMageSet',
+    'summer2016SeahorseHealerSet',
+    'summer2016EelSet',
+
+    // summer 2017
+    'summer2017SandcastleWarriorSet',
+    'summer2017WhirlpoolMageSet',
+    'summer2017SeashellSeahealerSet',
+    'summer2017SeaDragonSet',
+
+    // summer 2018
+    'summer2018BettaFishWarriorSet',
+    'summer2018LionfishMageSet',
+    'summer2018MerfolkMonarchSet',
+    'summer2018FisherRogueSet',
+  ],
+  fall: [
+    // fall 2014
+    'vampireSmiterSet',
+    'monsterOfScienceSet',
+    'witchyWizardSet',
+    'mummyMedicSet',
+
+    // fall 2015
+    'battleRogueSet',
+    'scarecrowWarriorSet',
+    'stitchWitchSet',
+    'potionerSet',
+
+    // fall 2016
+    'fall2016BlackWidowSet',
+    'fall2016SwampThingSet',
+    'fall2016WickedSorcererSet',
+    'fall2016GorgonHealerSet',
+
+    // fall 2017
+    'fall2017TrickOrTreatSet',
+    'fall2017HabitoweenSet',
+    'fall2017MasqueradeSet',
+    'fall2017HauntedHouseSet',
+
+    // fall 2018
+    'fall2018MinotaurWarriorSet',
+    'fall2018CandymancerMageSet',
+    'fall2018CarnivorousPlantSet',
+    'fall2018AlterEgoSet',
   ],
 };
 

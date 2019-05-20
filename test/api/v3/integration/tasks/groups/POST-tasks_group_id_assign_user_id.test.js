@@ -2,7 +2,7 @@ import {
   generateUser,
   createAndPopulateGroup,
   translate as t,
-} from '../../../../../helpers/api-v3-integration.helper';
+} from '../../../../../helpers/api-integration/v3';
 import { v4 as generateUUID } from 'uuid';
 import { find } from 'lodash';
 
@@ -111,6 +111,17 @@ describe('POST /tasks/:taskId/assign/:memberId', () => {
 
     expect(groupTask[0].group.assignedUsers).to.contain(member._id);
     expect(syncedTask).to.exist;
+  });
+
+  it('sends a notification to assigned user', async () => {
+    await user.post(`/tasks/${task._id}/assign/${member._id}`);
+    await member.sync();
+
+    let groupTask = await user.get(`/tasks/group/${guild._id}`);
+
+    expect(member.notifications.length).to.equal(1);
+    expect(member.notifications[0].type).to.equal('GROUP_TASK_ASSIGNED');
+    expect(member.notifications[0].taskId).to.equal(groupTask._id);
   });
 
   it('assigns a task to multiple users', async () => {

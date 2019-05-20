@@ -2,17 +2,17 @@
 .row
   challenge-modal(v-on:updatedChallenge='updatedChallenge')
   leave-challenge-modal(:challengeId='challenge._id')
-  close-challenge-modal(:members='members', :challengeId='challenge._id')
-  challenge-member-progress-modal(:memberId='progressMemberId', :challengeId='challenge._id')
+  close-challenge-modal(:members='members', :challengeId='challenge._id', :prize='challenge.prize')
+  challenge-member-progress-modal(:challengeId='challenge._id')
   .col-12.col-md-8.standard-page
     .row
       .col-12.col-md-6
         h1(v-markdown='challenge.name')
         div
-          span.mr-1.ml-0
+          span.mr-1.ml-0.d-block
             strong(v-once) {{ $t('createdBy') }}:
             user-link.mx-1(:user="challenge.leader")
-          span.mr-1.ml-0(v-if="challenge.group && challenge.group.name !== 'Tavern'")
+          span.mr-1.ml-0.d-block(v-if="challenge.group && challenge.group.name !== 'Tavern'")
             strong(v-once) {{ $t(challenge.group.type) }}:
             group-link.mx-1(:group="challenge.group")
           // @TODO: make challenge.author a variable inside the createdBy string (helps with RTL languages)
@@ -84,6 +84,7 @@
 
   h1 {
     color: $purple-200;
+    margin-bottom: 8px;
   }
 
   .margin-left {
@@ -230,7 +231,6 @@ export default {
       creatingTask: {},
       workingTask: {},
       taskFormPurpose: 'create',
-      progressMemberId: '',
       searchTerm: '',
       memberResults: [],
     };
@@ -317,7 +317,7 @@ export default {
     },
     createTask (type) {
       this.taskFormPurpose = 'create';
-      this.creatingTask = taskDefaults({type, text: ''});
+      this.creatingTask = taskDefaults({type, text: ''}, this.user);
       this.workingTask = this.creatingTask;
       // Necessary otherwise the first time the modal is not rendered
       Vue.nextTick(() => {
@@ -344,13 +344,14 @@ export default {
       this.tasksByType[task.type].splice(index, 1);
     },
     showMemberModal () {
-      this.$store.state.memberModalOptions.challengeId = this.challenge._id;
-      this.$store.state.memberModalOptions.groupId = 'challenge'; // @TODO: change these terrible settings
-      this.$store.state.memberModalOptions.group = this.group;
-      this.$store.state.memberModalOptions.memberCount = this.challenge.memberCount;
-      this.$store.state.memberModalOptions.viewingMembers = this.members;
-      this.$store.state.memberModalOptions.fetchMoreMembers = this.loadMembers;
-      this.$root.$emit('bv::show::modal', 'members-modal');
+      this.$root.$emit('habitica:show-member-modal', {
+        challengeId: this.challenge._id,
+        groupId: 'challenge', // @TODO: change these terrible settings
+        group: this.challenge.group,
+        memberCount: this.challenge.memberCount,
+        viewingMembers: this.members,
+        fetchMoreMembers: this.loadMembers,
+      });
     },
     async joinChallenge () {
       this.user.challenges.push(this.searchId);
@@ -364,23 +365,26 @@ export default {
       this.$root.$emit('bv::show::modal', 'close-challenge-modal');
     },
     edit () {
-      // @TODO: set working challenge
-      this.$store.state.challengeOptions.workingChallenge = Object.assign({}, this.$store.state.challengeOptions.workingChallenge, this.challenge);
-      this.$root.$emit('bv::show::modal', 'challenge-modal');
+      this.$root.$emit('habitica:update-challenge', {
+        challenge: this.challenge,
+      });
     },
     // @TODO: view members
     updatedChallenge (eventData) {
       Object.assign(this.challenge, eventData.challenge);
     },
     openMemberProgressModal (member) {
-      this.progressMemberId = member._id;
-      this.$root.$emit('bv::show::modal', 'challenge-member-modal');
+      this.$root.$emit('habitica:challenge:member-progress', {
+        progressMemberId: member._id,
+        isLeader: this.isLeader,
+        isAdmin: this.isAdmin,
+      });
     },
     async exportChallengeCsv () {
       // let response = await this.$store.dispatch('challenges:exportChallengeCsv', {
       //   challengeId: this.searchId,
       // });
-      window.location = `/api/v3/challenges/${this.searchId}/export/csv`;
+      window.location = `/api/v4/challenges/${this.searchId}/export/csv`;
     },
     cloneChallenge () {
       this.$root.$emit('habitica:clone-challenge', {

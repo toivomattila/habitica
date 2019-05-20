@@ -2,7 +2,7 @@ import {
   generateUser,
   createAndPopulateGroup,
   translate as t,
-} from '../../../../../helpers/api-v3-integration.helper';
+} from '../../../../../helpers/api-integration/v3';
 import { v4 as generateUUID } from 'uuid';
 import { find } from 'lodash';
 
@@ -84,6 +84,13 @@ describe('POST /tasks/:taskId/unassign/:memberId', () => {
 
     expect(groupTask[0].group.assignedUsers).to.not.contain(member._id);
     expect(syncedTask).to.not.exist;
+  });
+
+  it('removes task assignment notification from unassigned user', async () => {
+    await user.post(`/tasks/${task._id}/unassign/${member._id}`);
+
+    await member.sync();
+    expect(member.notifications.length).to.equal(0);
   });
 
   it('unassigns a user and only that user from a task', async () => {
